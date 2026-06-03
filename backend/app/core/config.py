@@ -35,9 +35,12 @@ class Settings(BaseSettings):
     API_VERSION: str = "0.1.0"
     API_DESCRIPTION: str = "AI-powered event planning platform"
 
-    # OpenAI/Gemini
+    # AI Provider — "openai" | "gemini" | "mock"
+    AI_PROVIDER: str = "mock"
     OPENAI_API_KEY: Optional[str] = None
     GEMINI_API_KEY: Optional[str] = None
+    OPENAI_MODEL: str = "gpt-4o-mini"
+    GEMINI_MODEL: str = "gemini-1.5-flash"
 
     # Logging
     LOG_LEVEL: str = "INFO"

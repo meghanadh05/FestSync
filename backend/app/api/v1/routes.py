@@ -6,11 +6,19 @@ from fastapi import APIRouter
 
 # Import routers from modules
 from app.modules.events.routes import router as events_router
+from app.modules.tasks.routes import router as tasks_router
+from app.modules.budget.routes import router as budget_router
+from app.modules.vendors.routes import router as vendors_router
+from app.modules.ai.routes import router as ai_router
 
 router = APIRouter()
 
 # Include routers from different modules
-router.include_router(events_router)
+router.include_router(events_router, tags=["events"])
+router.include_router(tasks_router, tags=["tasks"])
+router.include_router(budget_router, tags=["budget"])
+router.include_router(vendors_router, tags=["vendors"])
+router.include_router(ai_router, tags=["ai"])
 # router.include_router(auth_router, prefix="/auth", tags=["auth"])
 # router.include_router(users_router, prefix="/users", tags=["users"])
 # router.include_router(tasks_router, prefix="/tasks", tags=["tasks"])
