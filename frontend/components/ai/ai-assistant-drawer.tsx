@@ -1,25 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { useState, useRef, useEffect } from 'react';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Badge } from '@/components/ui/badge';
-import { Sparkles, Send, Zap, AlertCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Sparkles, Send, Loader2 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAIChat } from '@/hooks/use-ai';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
-  type: 'user' | 'assistant';
+  role: 'user' | 'assistant';
   content: string;
-  timestamp: Date;
+  suggestions?: string[];
 }
 
 interface AIAssistantDrawerProps {
@@ -28,247 +23,128 @@ interface AIAssistantDrawerProps {
   eventId?: string;
 }
 
-const quickActions = [
-  {
-    icon: '📋',
-    label: 'Generate Event Plan',
-    description: 'Create a comprehensive plan for your event',
-    action: 'generate_plan',
-  },
-  {
-    icon: '✅',
-    label: 'Generate Tasks',
-    description: 'Auto-generate tasks based on your event',
-    action: 'generate_tasks',
-  },
-  {
-    icon: '💰',
-    label: 'Suggest Budget',
-    description: 'Get AI-powered budget allocation',
-    action: 'suggest_budget',
-  },
-  {
-    icon: '👥',
-    label: 'Recommend Vendors',
-    description: 'Find vendors that match your event',
-    action: 'recommend_vendors',
-  },
+const QUICK_ACTIONS = [
+  { label: 'Generate Plan', prompt: 'Generate a comprehensive plan for my event', icon: '📋' },
+  { label: 'Generate Tasks', prompt: 'What tasks should I create first for this event?', icon: '✅' },
+  { label: 'Budget Advice', prompt: 'How should I split my budget across categories?', icon: '💰' },
+  { label: 'Vendor Tips', prompt: 'Which type of vendors should I book first?', icon: '🏪' },
 ];
 
-export function AIAssistantDrawer({
-  open,
-  onOpenChange,
-  eventId,
-}: AIAssistantDrawerProps) {
+export function AIAssistantDrawer({ open, onOpenChange, eventId }: AIAssistantDrawerProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
-      id: '1',
-      type: 'assistant',
-      content: '👋 Hi! I\'m your AI event planning assistant. I can help you generate plans, suggest tasks, optimize your budget, and recommend vendors. What would you like help with today?',
-      timestamp: new Date(),
+      id: '0',
+      role: 'assistant',
+      content: "👋 Hi! I'm your FestSync AI assistant. Ask me anything about planning your event!",
+      suggestions: ['What tasks should I start with?', 'How to split my budget?'],
     },
   ]);
   const [input, setInput] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const chat = useAIChat();
 
-  const handleQuickAction = async (action: string) => {
-    const actionLabels: Record<string, string> = {
-      generate_plan: 'Please generate a comprehensive event plan',
-      generate_tasks: 'Please generate tasks for my event',
-      suggest_budget: 'Please suggest a budget breakdown',
-      recommend_vendors: 'Please recommend vendors for my event',
-    };
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
-    const userMessage = actionLabels[action] || 'Help me with my event';
-    addMessage(userMessage, 'user');
-
-    // Simulate AI response
-    setIsLoading(true);
-    setTimeout(() => {
-      const responses: Record<string, string> = {
-        generate_plan:
-          '📅 I\'ve generated a comprehensive event plan with:\n• Pre-event preparation timeline\n• Day-of execution checklist\n• Post-event follow-up tasks\n\nYou can view the full plan in your Event Details page. Would you like me to break it down further?',
-        generate_tasks:
-          '✅ I\'ve created 15 tasks organized by category:\n• 5 Venue-related tasks\n• 4 Catering tasks\n• 3 Decoration tasks\n• 2 Entertainment tasks\n• 1 Guest management task\n\nAll tasks have been added to your to-do board!',
-        suggest_budget:
-          '💰 Based on your event details, here\'s a suggested budget breakdown:\n• Venue: 30%\n• Catering: 35%\n• Decoration: 15%\n• Entertainment: 15%\n• Contingency: 5%\n\nWould you like me to adjust this allocation?',
-        recommend_vendors:
-          '👥 I found 12 vendors that match your event:\n• 3 Premium venues\n• 2 Catering services\n• 3 Photographers\n• 2 Decoration specialists\n• 2 DJ/Entertainment\n\nI\'ve saved the top matches to your event. Check them out in the Vendors section!',
-      };
-
-      addMessage(
-        responses[action] ||
-          'I\'m processing your request. Please check your event dashboard for updates!',
-        'assistant'
-      );
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const handleSendMessage = () => {
-    if (!input.trim()) return;
-
-    addMessage(input, 'user');
+  const sendMessage = async (text: string) => {
+    if (!text.trim() || chat.isPending) return;
+    const userMsg: Message = { id: Date.now().toString(), role: 'user', content: text };
+    setMessages(prev => [...prev, userMsg]);
     setInput('');
-
-    // Simulate AI response
-    setIsLoading(true);
-    setTimeout(() => {
-      const responses = [
-        'Great question! Let me analyze your event details and provide some recommendations.',
-        'I\'ve reviewed your event plan. Would you like me to adjust anything?',
-        'Based on your preferences, I think the premium catering option would work best.',
-        'Let me check your calendar and suggest some vendor meeting times.',
-        'I can help you optimize your timeline. Which area would you like to focus on?',
-      ];
-
-      const randomResponse =
-        responses[Math.floor(Math.random() * responses.length)];
-      addMessage(randomResponse, 'assistant');
-      setIsLoading(false);
-    }, 1500);
-  };
-
-  const addMessage = (content: string, type: 'user' | 'assistant') => {
-    const newMessage: Message = {
-      id: Date.now().toString(),
-      type,
-      content,
-      timestamp: new Date(),
-    };
-    setMessages((prev) => [...prev, newMessage]);
+    try {
+      const history = messages.slice(-6).map(m => ({ role: m.role, content: m.content }));
+      const res = await chat.mutateAsync({ message: text, eventId, history });
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: res.result.message,
+        suggestions: res.result.suggestions,
+      }]);
+    } catch {
+      toast.error('AI failed to respond. Please try again.');
+    }
   };
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:w-[500px] flex flex-col p-0">
-        <SheetHeader className="px-6 py-4 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-indigo-600 to-purple-600 flex items-center justify-center">
-              <Sparkles className="h-5 w-5 text-white" />
+      <SheetContent side="right" className="w-full sm:max-w-md flex flex-col p-0">
+        <SheetHeader className="p-4 border-b shrink-0">
+          <SheetTitle className="flex items-center gap-2">
+            <div className="p-1.5 rounded-lg bg-indigo-600">
+              <Sparkles className="h-4 w-4 text-white" />
             </div>
-            <div>
-              <SheetTitle>AI Event Assistant</SheetTitle>
-              <SheetDescription>
-                Get instant help with your event planning
-              </SheetDescription>
-            </div>
-          </div>
+            FestSync AI
+          </SheetTitle>
         </SheetHeader>
 
-        <ScrollArea className="flex-1 overflow-hidden">
-          <div className="p-6 space-y-4 flex flex-col">
-            {messages.length === 1 ? (
-              // Initial state: show quick actions
-              <motion.div
-                className="space-y-3"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
-                <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
-                  Quick Actions
-                </p>
-                {quickActions.map((action, i) => (
-                  <motion.button
-                    key={action.action}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                    onClick={() => handleQuickAction(action.action)}
-                    className="w-full text-left p-4 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-slate-900 transition-all group"
-                  >
-                    <div className="flex items-start gap-3">
-                      <span className="text-2xl">{action.icon}</span>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition">
-                          {action.label}
-                        </p>
-                        <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
-                          {action.description}
-                        </p>
+        <ScrollArea className="flex-1 px-4 py-3">
+          <div className="space-y-4">
+            <AnimatePresence initial={false}>
+              {messages.map(msg => (
+                <motion.div key={msg.id}
+                  initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+                  className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                  <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed
+                    ${msg.role === 'user'
+                      ? 'bg-indigo-600 text-white rounded-br-sm'
+                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-sm'}`}>
+                    {msg.content}
+                    {msg.suggestions && msg.suggestions.length > 0 && (
+                      <div className="mt-3 space-y-1.5">
+                        {msg.suggestions.map((s, i) => (
+                          <button key={i} onClick={() => sendMessage(s)}
+                            className="block w-full text-left text-xs text-indigo-600 dark:text-indigo-400
+                              bg-indigo-50 dark:bg-indigo-900/30 rounded-lg px-3 py-1.5
+                              hover:bg-indigo-100 dark:hover:bg-indigo-900/50 transition-colors">
+                            {s}
+                          </button>
+                        ))}
                       </div>
-                      <Zap className="h-4 w-4 text-slate-400 group-hover:text-indigo-500 transition flex-shrink-0 mt-1" />
-                    </div>
-                  </motion.button>
-                ))}
-              </motion.div>
-            ) : (
-              // Chat messages
-              <>
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className={`flex ${
-                      message.type === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
-                  >
-                    <div
-                      className={`max-w-xs px-4 py-2 rounded-lg ${
-                        message.type === 'user'
-                          ? 'bg-indigo-600 text-white'
-                          : 'bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-50'
-                      }`}
-                    >
-                      <p className="text-sm whitespace-pre-wrap">
-                        {message.content}
-                      </p>
-                      <p
-                        className={`text-xs mt-1 ${
-                          message.type === 'user'
-                            ? 'text-indigo-100'
-                            : 'text-slate-500 dark:text-slate-400'
-                        }`}
-                      >
-                        {message.timestamp.toLocaleTimeString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                        })}
-                      </p>
-                    </div>
-                  </motion.div>
-                ))}
-
-                {isLoading && (
-                  <div className="flex gap-2">
-                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce" />
-                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce delay-100" />
-                    <div className="h-2 w-2 rounded-full bg-slate-400 animate-bounce delay-200" />
+                    )}
                   </div>
-                )}
-              </>
+                </motion.div>
+              ))}
+            </AnimatePresence>
+
+            {chat.isPending && (
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
+                <div className="bg-slate-100 dark:bg-slate-800 rounded-2xl rounded-bl-sm px-4 py-3">
+                  <div className="flex gap-1.5 items-center h-4">
+                    {[0, 1, 2].map(i => (
+                      <motion.div key={i}
+                        animate={{ y: [0, -4, 0] }}
+                        transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.15 }}
+                        className="w-1.5 h-1.5 bg-slate-400 rounded-full" />
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
             )}
+            <div ref={bottomRef} />
           </div>
         </ScrollArea>
 
-        {/* Input Area */}
-        <div className="border-t border-slate-200 dark:border-slate-700 p-6 space-y-3">
-          {messages.length > 1 && (
-            <div className="flex gap-2 flex-wrap">
-              <Badge variant="outline" className="text-xs">
-                💡 Tip: Ask about budget, vendors, or timeline
-              </Badge>
-            </div>
-          )}
+        <div className="px-4 py-3 border-t bg-slate-50 dark:bg-slate-900/50 shrink-0">
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            {QUICK_ACTIONS.map(action => (
+              <button key={action.label} onClick={() => sendMessage(action.prompt)}
+                disabled={chat.isPending}
+                className="text-left text-xs p-2.5 rounded-xl border bg-white dark:bg-slate-800
+                  hover:border-indigo-300 dark:hover:border-indigo-700 transition-colors disabled:opacity-50">
+                <span className="block text-base mb-0.5">{action.icon}</span>
+                {action.label}
+              </button>
+            ))}
+          </div>
           <div className="flex gap-2">
-            <Input
-              placeholder="Ask me anything..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => {
-                if (e.key === 'Enter') handleSendMessage();
-              }}
-              disabled={isLoading}
-              className="text-sm"
-            />
-            <Button
-              size="icon"
-              onClick={handleSendMessage}
-              disabled={isLoading || !input.trim()}
-              className="flex-shrink-0"
-            >
-              <Send className="h-4 w-4" />
+            <Input placeholder="Ask anything about your event…" value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && !e.shiftKey && sendMessage(input)}
+              disabled={chat.isPending} className="flex-1 text-sm" />
+            <Button size="icon" onClick={() => sendMessage(input)}
+              disabled={!input.trim() || chat.isPending}>
+              {chat.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
         </div>

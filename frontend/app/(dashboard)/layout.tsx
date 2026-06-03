@@ -1,3 +1,6 @@
+// All dashboard pages require auth — never statically render them
+export const dynamic = 'force-dynamic';
+
 import { Sidebar } from '@/components/layout/sidebar';
 import { Topbar } from '@/components/layout/topbar';
 

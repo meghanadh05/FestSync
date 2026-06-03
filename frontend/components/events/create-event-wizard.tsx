@@ -95,11 +95,31 @@ export function CreateEventWizard({ onComplete }: CreateEventWizardProps) {
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
+    try {
+      const { eventsApi } = await import('@/lib/api');
+      // Map wizard event type to backend enum
+      const typeMap: Record<string, string> = {
+        wedding: 'WEDDING', birthday: 'BIRTHDAY', corporate: 'CORPORATE_EVENT',
+        college_fest: 'COLLEGE_FEST', conference: 'CONFERENCE', custom: 'OTHER',
+      };
+      await eventsApi.create({
+        title: wizardState.title,
+        event_type: (typeMap[wizardState.eventType] ?? 'OTHER') as import('@/lib/api-types').EventTypeAPI,
+        start_date: wizardState.startDate,
+        end_date: wizardState.endDate || wizardState.startDate,
+        description: wizardState.description || undefined,
+        location: wizardState.location || undefined,
+        estimated_guests: wizardState.estimatedGuests || undefined,
+        budget: wizardState.budget || undefined,
+        currency: 'INR',
+      });
       onComplete?.();
-    }, 1500);
+    } catch (err) {
+      const { toast } = await import('sonner');
+      toast.error((err as Error).message ?? 'Failed to create event');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const progress = (currentStep / 6) * 100;

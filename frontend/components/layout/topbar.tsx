@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useUIStore } from '@/store/ui-store';
-import { mockCurrentUser } from '@/lib/mock-data';
+import { supabase } from '@/lib/supabase';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,89 +15,117 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Moon, Sun, Search, Bell } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Moon, Sun, Search, Sparkles } from 'lucide-react';
+import Link from 'next/link';
+import type { User } from '@supabase/supabase-js';
 
 export function Topbar() {
+  const router = useRouter();
   const theme = useUIStore((state) => state.theme);
   const setTheme = useUIStore((state) => state.setTheme);
+  const [user, setUser] = useState<User | null>(null);
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setUser(data.user));
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_, session) => {
+      setUser(session?.user ?? null);
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    router.push('/login');
   };
 
-  const userInitials = mockCurrentUser.full_name
+  const displayName =
+    user?.user_metadata?.full_name ??
+    user?.email?.split('@')[0] ??
+    'Account';
+  const initials = displayName
     .split(' ')
-    .map((n) => n[0])
+    .map((n: string) => n[0])
     .join('')
-    .toUpperCase();
+    .toUpperCase()
+    .slice(0, 2);
 
   return (
-    <header className="fixed top-0 right-0 left-0 h-16 border-b border-slate-200 bg-white dark:border-slate-700 dark:bg-slate-950 z-40">
-      <div className="flex items-center justify-between h-full px-6 gap-4">
-        {/* Logo area (for symmetry) */}
-        <div className="w-80" />
+    <header className="sticky top-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <div className="flex h-full items-center justify-between px-4 sm:px-6 gap-3">
+        {/* Logo */}
+        <Link
+          href="/dashboard"
+          className="flex items-center gap-2 font-bold text-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          aria-label="FestSync home"
+        >
+          <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center">
+            <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
+          </div>
+          <span className="hidden sm:inline">FestSync</span>
+        </Link>
 
-        {/* Search bar (center) */}
-        <div className="flex-1 max-w-md">
+        {/* Search */}
+        <div className="flex-1 max-w-xs sm:max-w-sm">
+          <label htmlFor="global-search" className="sr-only">Search events and vendors</label>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
             <Input
-              type="text"
-              placeholder="Search events, vendors..."
-              className="pl-10 bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-700"
+              id="global-search"
+              type="search"
+              placeholder="Search…"
+              className="pl-9 h-9 text-sm bg-muted/50"
             />
           </div>
         </div>
 
-        {/* Right side actions */}
-        <div className="flex items-center gap-4">
-          {/* Notifications */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors relative"
+        {/* Right actions */}
+        <div className="flex items-center gap-1 shrink-0">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            className="h-9 w-9"
           >
-            <Bell className="h-5 w-5 text-slate-700 dark:text-slate-300" />
-            <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full" />
-          </motion.button>
+            {theme === 'dark'
+              ? <Sun className="h-4 w-4" aria-hidden="true" />
+              : <Moon className="h-4 w-4" aria-hidden="true" />}
+          </Button>
 
-          {/* Theme toggle */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            onClick={toggleTheme}
-            className="p-2 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-          >
-            {theme === 'dark' ? (
-              <Sun className="h-5 w-5 text-slate-700 dark:text-slate-300" />
-            ) : (
-              <Moon className="h-5 w-5 text-slate-700 dark:text-slate-300" />
-            )}
-          </motion.button>
-
-          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="relative h-10 w-10 rounded-full p-0">
-                <Avatar className="h-10 w-10">
-                  <AvatarImage
-                    src={mockCurrentUser.avatar_url}
-                    alt={mockCurrentUser.full_name}
-                  />
-                  <AvatarFallback>{userInitials}</AvatarFallback>
+              <Button
+                variant="ghost"
+                className="relative h-9 w-9 rounded-full p-0"
+                aria-label="Open user menu"
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-700 dark:text-indigo-300 font-semibold">
+                    {initials}
+                  </AvatarFallback>
                 </Avatar>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="flex flex-col space-y-1">
-                <p className="text-sm font-medium">{mockCurrentUser.full_name}</p>
-                <p className="text-xs text-slate-500">{mockCurrentUser.email}</p>
+              <DropdownMenuLabel className="space-y-0.5">
+                <p className="text-sm font-medium truncate">{displayName}</p>
+                {user?.email && (
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                )}
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/dashboard">Dashboard</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/events">My Events</Link>
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600 dark:text-red-400">
-                Logout
+              <DropdownMenuItem
+                onClick={handleSignOut}
+                className="text-destructive focus:text-destructive"
+              >
+                Sign out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
