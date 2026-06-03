@@ -1,0 +1,35 @@
+name: Docker CI
+
+on:
+  push:
+    paths:
+      - "docker-compose.yml"
+      - "frontend/Dockerfile"
+      - "backend/Dockerfile"
+  pull_request:
+    paths:
+      - "docker-compose.yml"
+      - "frontend/Dockerfile"
+      - "backend/Dockerfile"
+
+jobs:
+  validate:
+    name: Validate and build images
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create env files
+        run: |
+          cp frontend/.env.example frontend/.env
+          cp backend/.env.example backend/.env
+
+      - name: Validate docker compose config
+        run: docker compose config --quiet
+
+      - name: Build backend image
+        run: docker compose build backend
+
+      - name: Build frontend image
+        run: docker compose build frontend
