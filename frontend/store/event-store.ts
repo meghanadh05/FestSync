@@ -12,6 +12,7 @@ interface EventWizardState {
   estimatedGuests: number;
   budget: number;
   description: string;
+  theme: string;
   currentStep: number;
 }
 
@@ -34,6 +35,7 @@ const initialWizardState: EventWizardState = {
   estimatedGuests: 0,
   budget: 0,
   description: '',
+  theme: '',
   currentStep: 1,
 };
 

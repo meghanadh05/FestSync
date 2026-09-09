@@ -1,16 +1,10 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
 import { Providers } from '@/components/providers';
 import './globals.css';
 
-const inter = Inter({ subsets: ['latin'] });
-
 export const metadata: Metadata = {
-  title: 'FestSync - AI-Powered Event Planning',
-  description: 'Plan your perfect event with AI-powered insights and vendor discovery',
-  icons: {
-    icon: '🎉',
-  },
+  title: 'FestSync - Event Operations',
+  description: 'Workspace-based event planning for teams, budgets, vendors, and tasks',
 };
 
 export default function RootLayout({
@@ -23,7 +17,7 @@ export default function RootLayout({
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
-      <body className={inter.className}>
+      <body>
         <Providers>{children}</Providers>
       </body>
     </html>

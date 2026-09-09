@@ -1,169 +1,148 @@
-# FestSync - AI-Powered Event Planning & Vendor Discovery Platform
+<div align="center">
 
-## Overview
+# ✨ FestSync
 
-FestSync is a comprehensive event planning platform that leverages AI to help users create and manage events seamlessly. From weddings and birthdays to corporate conferences and college fests, FestSync provides intelligent planning, vendor discovery, budget tracking, and a collaborative dashboard to bring events to life.
+### AI-Powered Event Planning & Vendor Discovery Platform
 
-## Key Features
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.104-009688?logo=fastapi)](https://fastapi.tiangolo.com)
+[![Supabase](https://img.shields.io/badge/Supabase-Auth%20%2B%20DB-3ECF8E?logo=supabase)](https://supabase.com)
+[![Tests](https://img.shields.io/badge/tests-116%20passing-brightgreen)](./backend)
 
-### Event Management
-- **Multi-event support**: Create and manage weddings, birthdays, college fests, corporate events, conferences, and custom events
-- **AI-powered planning**: Generate comprehensive event plans using OpenAI/Gemini APIs
-- **Smart to-do board**: Organize and track event tasks with priority and due dates
-- **Budget tracking**: Monitor event spending with real-time analytics and category-based breakdowns
+A full-stack AI project — Next.js 15 frontend, FastAPI backend, Supabase auth + PostgreSQL, and 5 AI agents powered by GPT-4 or Gemini.
 
-### Vendor Discovery
-- **Smart vendor search**: Find vendors based on event type, location, budget, and ratings
-- **Vendor comparison**: Compare multiple vendors side-by-side on pricing, services, and reviews
-- **Vendor management**: Save, organize, and track vendor communications
-- **Reviews & ratings**: Community-driven vendor ratings and detailed reviews
+</div>
 
-### Dashboard & Analytics
-- **Premium dashboard**: Get a bird's eye view of all event details, timeline, and progress
-- **Real-time analytics**: Track budget burn, task completion, and vendor pipeline
-- **Event timeline**: Visual timeline of events and key milestones
-- **Team collaboration**: Share event details and coordinate with family/team members
+---
 
-## Tech Stack
+## Quick Start
 
-### Frontend
-- **Next.js 15** - App Router with TypeScript for type-safe development
-- **TypeScript** - Full type safety across the application
-- **Tailwind CSS** - Utility-first CSS for rapid UI development
-- **ShadCN UI** - High-quality accessible component library
-- **Framer Motion** - Smooth animations and transitions
-- **TanStack Query** - Server state management and caching
-- **Zustand** - Lightweight client state management
-- **React Hook Form** - Efficient form handling
-- **Zod** - Runtime schema validation
-- **Recharts** - Beautiful, composable charting library
+```bash
+git clone https://github.com/meghanadh05b/festsync.git
+cd festsync
 
-### Backend
-- **FastAPI** - Modern, fast Python web framework
-- **Pydantic** - Data validation using Python type hints
-- **SQLModel** - SQL databases in Python with ORM/Pydantic integration
-- **PostgreSQL** - Robust relational database
-- **Supabase** - Authentication, real-time database, and storage
-- **OpenAI/Gemini API** - AI-powered event planning and recommendations
+chmod +x setup.sh stop.sh
+./setup.sh
+```
 
-### Infrastructure & Deployment
-- **Supabase** - Backend-as-a-Service for auth, database, and storage
-- **Vercel** - Frontend deployment with edge functions
-- **Render/Railway** - Backend deployment options
-- **JWT Authentication** - Secure token-based auth via Supabase
+`setup.sh` copies `.env.example` files, builds Docker images, and starts all services.
+
+For full Supabase auth + PostgreSQL integration, fill in your Supabase credentials in `backend/.env` and `frontend/.env` before running.
+The backend now falls back to a local SQLite database plus mock AI settings when those values are blank, which keeps local startup and tests working out of the box.
+
+| Service | URL |
+|---|---|
+| Frontend | http://localhost:3000 |
+| Backend API | http://localhost:8000 |
+| API Docs | http://localhost:8000/docs |
+
+```bash
+./stop.sh              # stop containers
+docker compose logs -f # live logs
+```
+
+---
+
+## Features
+
+| Feature | API |
+|---|---|
+| AI Event Planner | `POST /ai/events/{id}/generate-plan` |
+| AI Task Generator | `POST /ai/events/{id}/generate-tasks` |
+| AI Budget Advisor | `POST /ai/events/{id}/budget-advice` |
+| AI Vendor Recommender | `POST /ai/events/{id}/recommend-vendors` |
+| AI Chat Assistant | `POST /ai/chat` |
+| Kanban Task Board (drag + optimistic) | `PATCH /tasks/{id}/status` |
+| Budget Tracker (GOOD / WARNING / OVER_BUDGET) | `GET /events/{id}/budget/summary` |
+| Vendor Marketplace | `GET /vendors/search` |
+| Vendor Comparison | `POST /events/{id}/vendors/compare` |
+| Event Dashboard | `GET /events/{id}/dashboard` |
+
+---
 
 ## Project Structure
 
 ```
 festsync/
-├── frontend/              # Next.js application
-│   ├── app/              # App router pages and layouts
-│   ├── components/       # Reusable React components
-│   ├── lib/              # Utilities, hooks, API clients
-│   ├── styles/           # Global styles and CSS
-│   ├── types/            # TypeScript type definitions
-│   └── package.json
-├── backend/              # FastAPI application
-│   ├── app/              # FastAPI routes and endpoints
-│   ├── models/           # SQLModel database models
-│   ├── schemas/          # Pydantic schemas for validation
-│   ├── services/         # Business logic and AI services
-│   ├── middleware/       # Custom middleware
-│   ├── config.py         # Configuration
-│   └── requirements.txt
-├── docs/                 # Project documentation
-│   ├── ARCHITECTURE.md    # System architecture overview
-│   ├── DATABASE_SCHEMA.md # Database tables and relationships
-│   ├── API_SPEC.md        # API endpoints and contracts
-│   └── FRONTEND_PAGES.md  # Frontend routes and components
-├── README.md             # This file
-└── LICENSE              # MIT License
+├── frontend/          Next.js 15 app
+├── backend/           FastAPI app
+│   ├── app/
+│   │   ├── modules/   events, tasks, budget, vendors, ai
+│   │   ├── models/    SQLAlchemy ORM
+│   │   └── core/      config, security, database
+│   ├── migrations/    SQL files for Supabase
+│   ├── scripts/       seed_demo.py
+│   └── tests/unit/    116 pytest tests
+├── docs/              Architecture, API spec, schema, pages
+├── docker-compose.yml frontend + backend + redis
+├── setup.sh           One-command startup
+└── stop.sh            One-command shutdown
 ```
-
-## Getting Started
-
-### Prerequisites
-- Node.js 18+ and npm/yarn
-- Python 3.10+
-- PostgreSQL 14+
-- Supabase account
-- OpenAI API key (for AI features)
-
-### Frontend Setup
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Frontend runs on `http://localhost:3000`
-
-### Backend Setup
-
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
-python -m uvicorn app.main:app --reload
-```
-
-Backend runs on `http://localhost:8000`
-
-### Environment Variables
-
-Create `.env.local` in frontend and `.env` in backend:
-
-**Frontend** (.env.local):
-```
-NEXT_PUBLIC_API_URL=http://localhost:8000
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-```
-
-**Backend** (.env):
-```
-DATABASE_URL=postgresql://user:password@localhost/festsync
-SUPABASE_URL=your_supabase_url
-SUPABASE_KEY=your_service_key
-OPENAI_API_KEY=your_openai_key
-JWT_SECRET=your_jwt_secret
-```
-
-## Development Workflow
-
-1. Check [ARCHITECTURE.md](docs/ARCHITECTURE.md) for system design
-2. Review [DATABASE_SCHEMA.md](docs/DATABASE_SCHEMA.md) for data models
-3. Check [API_SPEC.md](docs/API_SPEC.md) for backend endpoints
-4. Review [FRONTEND_PAGES.md](docs/FRONTEND_PAGES.md) for UI structure
-
-## API Documentation
-
-Full API documentation available at `/docs` when running the backend (OpenAPI/Swagger).
-
-## Deployment
-
-### Frontend (Vercel)
-```bash
-vercel deploy
-```
-
-### Backend (Render/Railway)
-Deploy via GitHub integration or CLI tools provided by the platform.
-
-## Contributing
-
-This is a private project. For contributions, please follow the development workflow and ensure all tests pass.
-
-## License
-
-MIT License - See LICENSE file for details
-
-## Contact
-
-Project Lead: Meghanadh Borra (meghanadh05b@gmail.com)
 
 ---
 
-**Last Updated**: June 2026
+## Environment Variables
+
+Copy `.env.example` files (done automatically by `setup.sh`):
+
+```bash
+cp backend/.env.example backend/.env
+cp frontend/.env.example frontend/.env
+```
+
+### backend/.env (key values)
+| Variable | Description |
+|---|---|
+| `DATABASE_URL` | Supabase PostgreSQL connection string |
+| `SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_KEY` | Supabase anon key |
+| `SUPABASE_SERVICE_KEY` | Supabase service role key (backend only) |
+| `SECRET_KEY` | JWT signing secret |
+| `AI_PROVIDER` | `mock` / `openai` / `gemini` (default: `mock`) |
+| `OPENAI_API_KEY` | Required if `AI_PROVIDER=openai` |
+| `GEMINI_API_KEY` | Required if `AI_PROVIDER=gemini` |
+
+### frontend/.env (key values)
+| Variable | Description |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (public safe) |
+| `NEXT_PUBLIC_API_URL` | Backend base URL |
+
+---
+
+## Local Dev (without Docker)
+
+```bash
+# Backend
+cd backend
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
+
+# Seed demo data (optional)
+cd backend
+python scripts/seed_demo.py
+```
+
+`backend/.env` may be left mostly blank for local API development and unit tests.
+When `DATABASE_URL` is empty, the backend uses `backend/festsync.db`.
+
+---
+
+## Docs
+
+- [Architecture](docs/ARCHITECTURE.md)
+- [API Spec](docs/API_SPEC.md)
+- [Database Schema](docs/DATABASE_SCHEMA.md)
+- [Frontend Pages](docs/FRONTEND_PAGES.md)
+
+---
+
+## License
+
+MIT
