@@ -32,18 +32,18 @@ export function Providers({ children }: { children: React.ReactNode }) {
     document.documentElement.classList.toggle('dark', theme === 'dark');
   }, [theme]);
 
-  if (!mounted) return <>{children}</>;
-
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <Toaster
-        position="bottom-right"
-        richColors
-        closeButton
-        theme={theme as 'light' | 'dark' | 'system'}
-      />
-      {process.env.NODE_ENV === 'development' && (
+      {mounted && (
+        <Toaster
+          position="bottom-right"
+          richColors
+          closeButton
+          theme={theme as 'light' | 'dark' | 'system'}
+        />
+      )}
+      {mounted && process.env.NODE_ENV === 'development' && (
         <ReactQueryDevtools initialIsOpen={false} />
       )}
     </QueryClientProvider>

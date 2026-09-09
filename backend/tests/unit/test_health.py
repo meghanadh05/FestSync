@@ -36,3 +36,30 @@ class TestHealthCheck:
         data = response.json()
         assert data["status"] == "operational"
         assert data["version"] == "1.0.0"
+
+
+class TestLocalSupabaseAuth:
+    """Regression checks for local Supabase-style JWT handling."""
+
+    def test_supabase_token_with_audience_is_accepted(self, client):
+        """Supabase access tokens include aud; local decode must not reject it."""
+        from app.core.security import create_access_token
+
+        token = create_access_token(
+            data={
+                "sub": "supabase-user-id",
+                "email": "planner@example.com",
+                "aud": "authenticated",
+                "role": "authenticated",
+            }
+        )
+
+        response = client.get(
+            "/api/v1/events",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+        )
+
+        assert response.status_code == 200

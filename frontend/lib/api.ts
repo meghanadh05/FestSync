@@ -1,8 +1,9 @@
 // Centralized API client — all backend calls go through here.
 // Auth token is injected automatically from Supabase session.
 
-import { supabase } from './supabase';
+import { getLocalDevAccessToken, isSupabaseConfigured, supabase } from './supabase';
 import type {
+  APIWorkspace, APIWorkspaceList, CreateWorkspacePayload,
   APIEvent, APIEventList, APIEventDashboard, CreateEventPayload, UpdateEventPayload,
   APITask, APITaskList, APIKanbanBoard, CreateTaskPayload, UpdateTaskPayload, APISubtask,
   APIBudgetItem, APIBudgetList, APIBudgetSummary, CreateBudgetItemPayload, UpdateBudgetItemPayload,
@@ -20,12 +21,25 @@ class APIError extends Error {
   }
 }
 
+function toQueryString(params?: Record<string, string | number | boolean | undefined | null>): string {
+  const filtered = Object.entries(params ?? {})
+    .filter(([, value]) => value !== undefined && value !== null && value !== '')
+    .reduce((acc, [key, value]) => {
+      acc[key] = String(value);
+      return acc;
+    }, {} as Record<string, string>);
+
+  const query = new URLSearchParams(filtered).toString();
+  return query ? `?${query}` : '';
+}
+
 async function getAuthHeaders(): Promise<HeadersInit> {
   const { data: { session } } = await supabase.auth.getSession();
-  if (!session?.access_token) throw new APIError(401, 'Not authenticated');
+  const accessToken = session?.access_token ?? (!isSupabaseConfigured() ? getLocalDevAccessToken() : null);
+  if (!accessToken) throw new APIError(401, 'Not authenticated');
   return {
     'Content-Type': 'application/json',
-    Authorization: `Bearer ${session.access_token}`,
+    Authorization: `Bearer ${accessToken}`,
   };
 }
 
@@ -57,7 +71,7 @@ async function request<T>(
 
 export const eventsApi = {
   list: (params?: { skip?: number; limit?: number; search?: string; status?: string }) =>
-    request<APIEventList>(`/events?${new URLSearchParams(params as Record<string, string>)}`),
+    request<APIEventList>(`/events${toQueryString(params)}`),
 
   get: (id: string) =>
     request<APIEvent>(`/events/${id}`),
@@ -79,11 +93,11 @@ export const eventsApi = {
 
 export const tasksApi = {
   list: (eventId: string, params?: { status?: string; priority?: string; category?: string; search?: string }) =>
-    request<APITaskList>(`/events/${eventId}/tasks?${new URLSearchParams(params as Record<string, string>)}`),
+    request<APITaskList>(`/events/${eventId}/tasks${toQueryString(params)}`),
 
   kanban: (eventId: string, params?: { priority?: string; category?: string; search?: string }) => {
-    const qs = new URLSearchParams({ group_by_status: 'true', ...(params as Record<string, string>) });
-    return request<APIKanbanBoard>(`/events/${eventId}/tasks?${qs}`);
+    const qs = toQueryString({ group_by_status: true, ...params });
+    return request<APIKanbanBoard>(`/events/${eventId}/tasks${qs}`);
   },
 
   create: (eventId: string, payload: CreateTaskPayload) =>
@@ -106,7 +120,7 @@ export const tasksApi = {
 
 export const budgetApi = {
   list: (eventId: string, params?: { skip?: number; limit?: number; category?: string }) =>
-    request<APIBudgetList>(`/events/${eventId}/budget?${new URLSearchParams(params as Record<string, string>)}`),
+    request<APIBudgetList>(`/events/${eventId}/budget${toQueryString(params)}`),
 
   summary: (eventId: string) =>
     request<APIBudgetSummary>(`/events/${eventId}/budget/summary`),
@@ -128,12 +142,7 @@ export const vendorsApi = {
     category?: string; location?: string; event_type?: string;
     min_price?: number; max_price?: number; min_rating?: number;
     verified_only?: boolean; event_budget?: number; skip?: number; limit?: number;
-  }) => {
-    const qs = Object.entries(params)
-      .filter(([, v]) => v !== undefined && v !== null && v !== '')
-      .reduce((acc, [k, v]) => { acc[k] = String(v); return acc; }, {} as Record<string, string>);
-    return request<APIVendorSearch>(`/vendors/search?${new URLSearchParams(qs)}`, {}, false);
-  },
+  }) => request<APIVendorSearch>(`/vendors/search${toQueryString(params)}`, {}, false),
 
   get: (id: string) =>
     request<APIVendorFull>(`/vendors/${id}`, {}, false),
@@ -183,3 +192,16 @@ export const aiApi = {
 };
 
 export { APIError };
+
+// ---- Workspaces ------------------------------------------------------------
+
+export const workspacesApi = {
+  list: () =>
+    request<APIWorkspaceList>('/workspaces'),
+
+  get: (id: string) =>
+    request<APIWorkspace>(`/workspaces/${id}`),
+
+  create: (payload: CreateWorkspacePayload) =>
+    request<APIWorkspace>('/workspaces', { method: 'POST', body: JSON.stringify(payload) }),
+};

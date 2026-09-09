@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, MapPin, DollarSign, Search, BadgeCheck, Heart, Loader2 } from 'lucide-react';
+import { Star, MapPin, DollarSign, Search, BadgeCheck } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,6 +17,8 @@ const CATEGORIES = [
   'CATERING','VENUE','PHOTOGRAPHY','VIDEOGRAPHY','DECORATION',
   'MUSIC','DJ','FLORIST','BAKERY','TRANSPORT','MAKEUP','LIGHTING','EVENT_PLANNER',
 ];
+const ALL_CATEGORIES = 'ALL_CATEGORIES';
+const ANY_RATING = 'ANY_RATING';
 
 function VendorCardSkeleton() {
   return (
@@ -28,8 +30,8 @@ function VendorCardSkeleton() {
   );
 }
 
-function VendorCard({ vendor, onSave, isSaving }: {
-  vendor: APIVendorCard; onSave: () => void; isSaving: boolean;
+function VendorCard({ vendor }: {
+  vendor: APIVendorCard;
 }) {
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -70,11 +72,9 @@ function VendorCard({ vendor, onSave, isSaving }: {
           )}
         </div>
 
-        <Button size="sm" variant="outline" className="w-full gap-2"
-          onClick={onSave} disabled={isSaving}>
-          {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Heart className="h-3.5 w-3.5" />}
-          Save vendor
-        </Button>
+        <div className="border-t border-slate-100 pt-3 text-xs text-slate-500 dark:border-neutral-900">
+          Save vendors from an event workspace.
+        </div>
       </Card>
     </motion.div>
   );
@@ -85,7 +85,6 @@ export default function VendorsPage() {
   const [category, setCategory] = useState<string>('');
   const [minRating, setMinRating] = useState<string>('');
   const [verifiedOnly, setVerifiedOnly] = useState(false);
-  const [savingId, setSavingId] = useState<string | null>(null);
 
   const { data, isLoading, isFetching } = useVendorSearch({
     category: category || undefined,
@@ -119,17 +118,23 @@ export default function VendorsPage() {
           <Input placeholder="Search vendors…" className="pl-9"
             value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <Select value={category} onValueChange={setCategory}>
+        <Select
+          value={category || ALL_CATEGORIES}
+          onValueChange={(value) => setCategory(value === ALL_CATEGORIES ? '' : value)}
+        >
           <SelectTrigger className="w-44"><SelectValue placeholder="All categories" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All categories</SelectItem>
+            <SelectItem value={ALL_CATEGORIES}>All categories</SelectItem>
             {CATEGORIES.map(c => <SelectItem key={c} value={c}>{c.replace('_', ' ')}</SelectItem>)}
           </SelectContent>
         </Select>
-        <Select value={minRating} onValueChange={setMinRating}>
+        <Select
+          value={minRating || ANY_RATING}
+          onValueChange={(value) => setMinRating(value === ANY_RATING ? '' : value)}
+        >
           <SelectTrigger className="w-36"><SelectValue placeholder="Any rating" /></SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Any rating</SelectItem>
+            <SelectItem value={ANY_RATING}>Any rating</SelectItem>
             {['4', '4.5', '3'].map(r => <SelectItem key={r} value={r}>{r}+ stars</SelectItem>)}
           </SelectContent>
         </Select>
@@ -152,12 +157,7 @@ export default function VendorsPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredItems.map(vendor => (
-            <VendorCard key={vendor.id} vendor={vendor}
-              isSaving={savingId === vendor.id}
-              onSave={() => {
-                setSavingId(vendor.id);
-                setTimeout(() => setSavingId(null), 1000);
-              }} />
+            <VendorCard key={vendor.id} vendor={vendor} />
           ))}
         </div>
       )}

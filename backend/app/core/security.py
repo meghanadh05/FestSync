@@ -107,7 +107,10 @@ def verify_supabase_token(token: str) -> Dict[str, Any]:
             token,
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],
-            options={"verify_signature": False}  # For dev only!
+            options={
+                "verify_signature": False,  # For local development only.
+                "verify_aud": False,
+            },
         )
 
         # Verify required claims

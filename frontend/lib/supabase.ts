@@ -25,9 +25,33 @@ type AppSupabaseClient = SupabaseClient | LocalSupabaseClient;
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const DEMO_USER_ID = 'demo-user-00000000-0000-0000-0000-000000000001';
 
 function isConfigured(value: string | undefined): value is string {
   return Boolean(value && !value.includes('your-project') && !value.includes('your-anon-key'));
+}
+
+function base64UrlEncode(value: unknown): string {
+  return btoa(JSON.stringify(value))
+    .replace(/\+/g, '-')
+    .replace(/\//g, '_')
+    .replace(/=/g, '');
+}
+
+export function isSupabaseConfigured(): boolean {
+  return isConfigured(supabaseUrl) && isConfigured(supabaseAnonKey);
+}
+
+export function getLocalDevAccessToken(): string {
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64UrlEncode({ alg: 'none', typ: 'JWT' });
+  const payload = base64UrlEncode({
+    sub: DEMO_USER_ID,
+    email: 'demo@festsync.local',
+    exp: now + 60 * 60 * 24,
+  });
+
+  return `${header}.${payload}.`;
 }
 
 function createLocalClient(): LocalSupabaseClient {
