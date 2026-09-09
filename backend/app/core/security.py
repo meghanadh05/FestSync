@@ -4,9 +4,16 @@ Security utilities including JWT token handling and Supabase auth verification.
 
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any
-import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
+try:
+    from jose import ExpiredSignatureError, JWTError, jwt
+except ModuleNotFoundError:
+    import jwt  # type: ignore[no-redef]
+
+    ExpiredSignatureError = jwt.ExpiredSignatureError
+    JWTError = jwt.InvalidTokenError
 
 from app.core.config import settings
 
@@ -63,13 +70,13 @@ def verify_token(token: str) -> Dict[str, Any]:
             algorithms=[settings.JWT_ALGORITHM]
         )
         return payload
-    except jwt.ExpiredSignatureError:
+    except ExpiredSignatureError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    except jwt.InvalidTokenError:
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",
@@ -111,7 +118,7 @@ def verify_supabase_token(token: str) -> Dict[str, Any]:
             )
 
         return payload
-    except jwt.InvalidTokenError as e:
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication token",
