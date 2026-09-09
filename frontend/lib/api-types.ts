@@ -15,6 +15,36 @@ export type VendorCategoryAPI =
   | 'MUSIC' | 'DJ' | 'FLORIST' | 'BAKERY' | 'TRANSPORT' | 'MAKEUP'
   | 'ATTIRE' | 'EVENT_PLANNER' | 'SECURITY' | 'LIGHTING' | 'OTHER';
 
+export type WorkspaceRoleAPI = 'OWNER' | 'ADMIN' | 'PLANNER' | 'MEMBER' | 'VIEWER';
+
+// ---- Workspaces ------------------------------------------------------------
+
+export interface APIWorkspace {
+  id: string;
+  name: string;
+  organization: string | null;
+  country: string;
+  currency: string;
+  timezone: string;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  role: WorkspaceRoleAPI;
+}
+
+export interface APIWorkspaceList {
+  total: number;
+  items: APIWorkspace[];
+}
+
+export interface CreateWorkspacePayload {
+  name: string;
+  organization?: string;
+  country?: string;
+  currency?: string;
+  timezone?: string;
+}
+
 // ---- Events ----------------------------------------------------------------
 
 export interface APIEvent {

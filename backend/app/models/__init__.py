@@ -8,6 +8,7 @@ All models should inherit from Base and follow naming conventions:
 """
 
 from app.core.database import Base
+from app.models.workspace import Workspace, WorkspaceMember
 
 # Import models here
 # from app.models.user import User
@@ -20,6 +21,8 @@ from app.core.database import Base
 
 __all__ = [
     "Base",
+    "Workspace",
+    "WorkspaceMember",
     # "User",
     # "Event",
     # "Task",
