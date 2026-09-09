@@ -27,7 +27,8 @@ chmod +x setup.sh stop.sh
 
 `setup.sh` copies `.env.example` files, builds Docker images, and starts all services.
 
-Fill in your Supabase credentials in `backend/.env` and `frontend/.env` before running.
+For full Supabase auth + PostgreSQL integration, fill in your Supabase credentials in `backend/.env` and `frontend/.env` before running.
+The backend now falls back to a local SQLite database plus mock AI settings when those values are blank, which keeps local startup and tests working out of the box.
 
 | Service | URL |
 |---|---|
@@ -127,6 +128,9 @@ npm run dev
 cd backend
 python scripts/seed_demo.py
 ```
+
+`backend/.env` may be left mostly blank for local API development and unit tests.
+When `DATABASE_URL` is empty, the backend uses `backend/festsync.db`.
 
 ---
 

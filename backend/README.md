@@ -46,8 +46,11 @@ pip install -r requirements.txt
 
 ```bash
 cp .env.example .env
-# Edit .env with your Supabase credentials
+# Optional: edit .env with your Supabase credentials
 ```
+
+If `DATABASE_URL` is left blank, the backend uses a local SQLite file at `backend/festsync.db`.
+That fallback keeps `pytest` and local API startup working without a provisioned Supabase database.
 
 ### 4. Run Database Migrations
 
@@ -121,6 +124,7 @@ DEBUG=True
 
 # Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/festsync
+# Leave blank to use backend/festsync.db locally
 
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
@@ -131,6 +135,9 @@ SUPABASE_SERVICE_KEY=your-service-key
 JWT_ALGORITHM=HS256
 JWT_EXPIRATION_HOURS=24
 SECRET_KEY=your-secret-key
+
+# Cache / background services
+REDIS_URL=redis://localhost:6379/0
 
 # CORS
 ALLOWED_ORIGINS=http://localhost:3000
