@@ -99,7 +99,10 @@ fi
 # ── Start services ────────────────────────────────────────────────────────────
 echo ""
 info "Building and starting containers (this may take a few minutes on first run)…"
-$COMPOSE up --build -d
+if ! $COMPOSE up --build -d; then
+  warn "Build failed. Trying to start previously built local images without rebuilding."
+  $COMPOSE up --no-build -d
+fi
 
 # ── Done ─────────────────────────────────────────────────────────────────────
 echo ""
