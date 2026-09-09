@@ -6,13 +6,12 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { motion } from 'framer-motion';
-import { Sparkles, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { ArrowRight, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { isSupabaseConfigured, supabase } from '@/lib/supabase';
 import { toast } from 'sonner';
 
 const loginSchema = z.object({
@@ -31,6 +30,12 @@ export default function LoginPage() {
   });
 
   const onSubmit = async ({ email, password }: LoginForm) => {
+    if (!isSupabaseConfigured()) {
+      toast.success('Using local demo workspace');
+      router.push('/onboarding');
+      return;
+    }
+
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       toast.error(error.message);
@@ -41,80 +46,83 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-md"
-      >
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-600">
-            <Sparkles className="h-6 w-6 text-white" />
-          </div>
-          <h1 className="text-3xl font-bold text-white">Welcome back</h1>
-          <p className="mt-2 text-slate-400">Sign in to your FestSync account</p>
+    <main className="flex min-h-screen items-center justify-center px-4 py-10">
+      <div className="w-full max-w-md space-y-6">
+        <div className="space-y-2">
+          <Link href="/" className="text-sm font-semibold text-slate-700 hover:text-slate-950 dark:text-slate-300 dark:hover:text-white">
+            FestSync
+          </Link>
+          <h1 className="text-2xl font-semibold tracking-tight">Sign in</h1>
+          <p className="text-sm text-slate-500">
+            {isSupabaseConfigured() ? 'Access your event operations workspace.' : 'Continue with the local development workspace.'}
+          </p>
         </div>
 
-        <Card className="border-slate-700 bg-slate-800/50 p-8 backdrop-blur">
+        <Card className="rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+          <CardHeader>
+            <CardTitle className="text-base">Account Access</CardTitle>
+          </CardHeader>
+          <CardContent>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-slate-200">Email</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
                 id="email"
                 type="email"
                 placeholder="you@example.com"
-                className="border-slate-600 bg-slate-700/50 text-white placeholder:text-slate-400"
                 {...register('email')}
               />
               {errors.email && (
-                <p className="text-sm text-red-400">{errors.email.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.email.message}</p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="password" className="text-slate-200">Password</Label>
+              <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? 'text' : 'password'}
-                  placeholder="••••••••"
-                  className="border-slate-600 bg-slate-700/50 pr-10 text-white placeholder:text-slate-400"
+                  placeholder="Password"
+                  className="pr-10"
                   {...register('password')}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-900 dark:hover:text-slate-100"
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
               {errors.password && (
-                <p className="text-sm text-red-400">{errors.password.message}</p>
+                <p className="text-sm text-red-600 dark:text-red-400">{errors.password.message}</p>
               )}
             </div>
 
             <Button
               type="submit"
-              className="w-full bg-indigo-600 hover:bg-indigo-700"
+              className="w-full gap-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? (
-                <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Signing in…</>
+                <><Loader2 className="h-4 w-4 animate-spin" /> Signing in</>
               ) : (
-                'Sign in'
+                <>{isSupabaseConfigured() ? 'Sign in' : 'Continue locally'} <ArrowRight className="h-4 w-4" /></>
               )}
             </Button>
           </form>
 
-          <p className="mt-6 text-center text-sm text-slate-400">
+          <p className="mt-6 text-center text-sm text-slate-500">
             Don&apos;t have an account?{' '}
-            <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 hover:underline">
+            <Link href="/signup" className="font-medium text-slate-900 hover:underline dark:text-slate-100">
               Sign up
             </Link>
           </p>
+          </CardContent>
         </Card>
-      </motion.div>
-    </div>
+      </div>
+    </main>
   );
 }

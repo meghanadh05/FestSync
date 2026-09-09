@@ -15,7 +15,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { Moon, Sun, Search, Sparkles } from 'lucide-react';
+import { CalendarPlus, Moon, Search, Sun } from 'lucide-react';
 import Link from 'next/link';
 import type { User } from '@supabase/supabase-js';
 
@@ -50,36 +50,36 @@ export function Topbar() {
     .slice(0, 2);
 
   return (
-    <header className="sticky top-0 z-40 h-14 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+    <header className="sticky top-0 z-40 h-14 border-b border-slate-200 bg-white/90 backdrop-blur dark:border-neutral-800 dark:bg-neutral-950/90">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 gap-3">
-        {/* Logo */}
         <Link
           href="/dashboard"
-          className="flex items-center gap-2 font-bold text-lg shrink-0 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded"
+          className="flex items-center gap-2 text-sm font-semibold md:hidden"
           aria-label="FestSync home"
         >
-          <div className="h-7 w-7 rounded-lg bg-indigo-600 flex items-center justify-center">
-            <Sparkles className="h-4 w-4 text-white" aria-hidden="true" />
-          </div>
-          <span className="hidden sm:inline">FestSync</span>
+          FestSync
         </Link>
 
-        {/* Search */}
-        <div className="flex-1 max-w-xs sm:max-w-sm">
+        <div className="hidden flex-1 max-w-md sm:block">
           <label htmlFor="global-search" className="sr-only">Search events and vendors</label>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
             <Input
               id="global-search"
               type="search"
-              placeholder="Search…"
-              className="pl-9 h-9 text-sm bg-muted/50"
+              placeholder="Search events or vendors"
+              className="h-9 border-slate-200 bg-slate-50 pl-9 text-sm dark:border-neutral-800 dark:bg-neutral-900"
             />
           </div>
         </div>
 
-        {/* Right actions */}
         <div className="flex items-center gap-1 shrink-0">
+          <Link href="/events/create">
+            <Button size="sm" className="hidden gap-2 sm:inline-flex">
+              <CalendarPlus className="h-4 w-4" />
+              New event
+            </Button>
+          </Link>
           <Button
             variant="ghost"
             size="icon"

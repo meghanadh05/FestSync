@@ -12,7 +12,7 @@ export const eventKeys = {
   dashboard: (id: string) => [...eventKeys.all, 'dashboard', id] as const,
 };
 
-export function useEvents(params?: { search?: string; status?: string }) {
+export function useEvents(params?: { search?: string; status?: string; skip?: number; limit?: number }) {
   return useQuery({
     queryKey: eventKeys.list(params),
     queryFn: () => eventsApi.list({ limit: 50, ...params }),

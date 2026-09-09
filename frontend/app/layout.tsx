@@ -3,11 +3,8 @@ import { Providers } from '@/components/providers';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'FestSync - AI-Powered Event Planning',
-  description: 'Plan your perfect event with AI-powered insights and vendor discovery',
-  icons: {
-    icon: '🎉',
-  },
+  title: 'FestSync - Event Operations',
+  description: 'Workspace-based event planning for teams, budgets, vendors, and tasks',
 };
 
 export default function RootLayout({

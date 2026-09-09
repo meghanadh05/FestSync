@@ -1,253 +1,160 @@
 'use client';
 
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import {
-  Calendar, DollarSign, Plus,
-  ArrowRight, Sparkles, Users, TrendingUp,
-} from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Calendar, ChevronRight, DollarSign, FolderKanban, Plus, Users } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { StatCard } from '@/components/ui/stat-card';
-import { EmptyState } from '@/components/ui/empty-state';
-import { ErrorState } from '@/components/ui/error-state';
 import { useEvents } from '@/hooks/use-events';
-import { formatCurrency, daysUntil } from '@/lib/utils';
+import { daysUntil, formatCurrency } from '@/lib/utils';
 
-const STAGGER = { hidden: { opacity: 0 }, visible: { opacity: 1, transition: { staggerChildren: 0.08 } } };
-const ITEM = { hidden: { opacity: 0, y: 12 }, visible: { opacity: 1, y: 0, transition: { duration: 0.35 } } };
-
-const STATUS_COLORS: Record<string, string> = {
-  PLANNING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-  COMPLETED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  CANCELLED: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
+const STATUS_STYLES: Record<string, string> = {
+  PLANNING: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300',
+  ACTIVE: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
+  COMPLETED: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-slate-300',
+  CANCELLED: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300',
 };
 
-export default function DashboardPage() {
-  const { data: eventsData, isLoading, isError, refetch } = useEvents({ limit: 50 } as never);
+function Metric({ label, value, icon: Icon }: { label: string; value: string | number; icon: typeof Calendar }) {
+  return (
+    <Card className="rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+      <CardContent className="flex items-center justify-between p-4">
+        <div>
+          <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
+          <p className="mt-1 text-2xl font-semibold">{value}</p>
+        </div>
+        <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100 text-slate-700 dark:bg-neutral-900 dark:text-slate-200">
+          <Icon className="h-5 w-5" />
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
-  const events = eventsData?.items ?? [];
-  const totalEvents = eventsData?.total ?? 0;
-  const upcomingEvents = events
-    .filter(e => daysUntil(e.start_date) >= 0)
+export default function DashboardPage() {
+  const { data, isLoading, isError, error, refetch } = useEvents({ limit: 50 });
+  const events = data?.items ?? [];
+  const activeEvents = events.filter((event) => ['ACTIVE', 'PLANNING'].includes(event.status));
+  const upcoming = activeEvents
+    .filter((event) => daysUntil(event.start_date) >= 0)
     .sort((a, b) => daysUntil(a.start_date) - daysUntil(b.start_date))
-    .slice(0, 4);
-  const totalBudget = events.reduce((s, e) => s + (e.budget ?? 0), 0);
-  const activeEvents = events.filter(e => e.status === 'ACTIVE' || e.status === 'PLANNING').length;
+    .slice(0, 6);
+  const totalBudget = events.reduce((sum, event) => sum + Number(event.budget ?? 0), 0);
+  const guestCount = events.reduce((sum, event) => sum + Number(event.estimated_guests ?? 0), 0);
 
   return (
-    <div className="space-y-7">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -10 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4"
-      >
+    <div className="space-y-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Your event planning command centre
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Dashboard</h1>
+          <p className="mt-1 text-sm text-slate-500">Live planning summary from your FestSync API.</p>
         </div>
         <Link href="/events/create">
-          <Button className="gap-2 w-full sm:w-auto" size="sm">
-            <Plus className="h-4 w-4" aria-hidden="true" />
-            New Event
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            New event
           </Button>
         </Link>
-      </motion.div>
+      </div>
 
-      {/* KPI strip */}
-      <motion.div
-        variants={STAGGER}
-        initial="hidden"
-        animate="visible"
-        className="grid grid-cols-2 lg:grid-cols-4 gap-4"
-      >
-        <motion.div variants={ITEM}>
-          <StatCard
-            icon={<Calendar className="h-4 w-4" />}
-            label="Total Events"
-            value={isLoading ? '—' : totalEvents}
-            sub={isLoading ? undefined : `${activeEvents} active`}
-            colorClass="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400"
-            loading={isLoading}
-          />
-        </motion.div>
-        <motion.div variants={ITEM}>
-          <StatCard
-            icon={<TrendingUp className="h-4 w-4" />}
-            label="Active Plans"
-            value={isLoading ? '—' : activeEvents}
-            sub="in planning"
-            colorClass="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400"
-            loading={isLoading}
-          />
-        </motion.div>
-        <motion.div variants={ITEM}>
-          <StatCard
-            icon={<DollarSign className="h-4 w-4" />}
-            label="Total Budget"
-            value={isLoading ? '—' : formatCurrency(totalBudget, 'INR')}
-            sub="across all events"
-            colorClass="bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-            loading={isLoading}
-          />
-        </motion.div>
-        <motion.div variants={ITEM}>
-          <StatCard
-            icon={<Users className="h-4 w-4" />}
-            label="Events Completed"
-            value={isLoading ? '—' : events.filter(e => e.status === 'COMPLETED').length}
-            sub="all time"
-            colorClass="bg-purple-50 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400"
-            loading={isLoading}
-          />
-        </motion.div>
-      </motion.div>
-
-      {/* Main grid */}
       {isError ? (
-        <ErrorState
-          title="Couldn't load your events"
-          message="Check your connection or try again."
-          onRetry={() => refetch()}
-        />
-      ) : (
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Upcoming events */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="lg:col-span-2"
-          >
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <div>
-                  <CardTitle className="text-base">Upcoming Events</CardTitle>
-                  <CardDescription>Events happening soon</CardDescription>
-                </div>
-                <Link href="/events">
-                  <Button variant="ghost" size="sm" className="gap-1 text-xs h-7">
-                    View all <ArrowRight className="h-3 w-3" />
-                  </Button>
-                </Link>
-              </CardHeader>
-              <CardContent>
-                {isLoading ? (
-                  <div className="space-y-3">
-                    {Array.from({ length: 3 }).map((_, i) => (
-                      <Skeleton key={i} className="h-16 rounded-lg" />
-                    ))}
-                  </div>
-                ) : upcomingEvents.length === 0 ? (
-                  <EmptyState
-                    icon="📅"
-                    title="No upcoming events"
-                    description="Create your first event to get started."
-                    size="sm"
-                    action={{ label: 'Create Event', href: '/events/create' }}
-                  />
-                ) : (
-                  <div className="space-y-2.5">
-                    {upcomingEvents.map((event) => {
-                      const days = daysUntil(event.start_date);
-                      return (
-                        <Link key={event.id} href={`/events/${event.id}`}>
-                          <motion.div
-                            whileHover={{ x: 3 }}
-                            className="flex items-center gap-4 p-3.5 rounded-xl border border-border hover:border-indigo-300 dark:hover:border-indigo-700 hover:bg-muted/40 transition-all cursor-pointer group"
-                          >
-                            <div className="flex-1 min-w-0">
-                              <p className="font-medium text-sm truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                                {event.title}
-                              </p>
-                              <div className="flex items-center gap-2 mt-1">
-                                <Calendar className="h-3 w-3 text-muted-foreground shrink-0" />
-                                <span className="text-xs text-muted-foreground">
-                                  {new Date(event.start_date).toLocaleDateString('en-IN', {
-                                    day: 'numeric', month: 'short', year: 'numeric',
-                                  })}
-                                </span>
-                                {event.location && (
-                                  <>
-                                    <span className="text-muted-foreground">·</span>
-                                    <span className="text-xs text-muted-foreground truncate">{event.location}</span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2.5 shrink-0">
-                              <Badge className={`text-xs ${STATUS_COLORS[event.status]}`}>
-                                {event.status}
-                              </Badge>
-                              {days >= 0 && (
-                                <div className="text-right hidden sm:block">
-                                  <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400">{days}d</p>
-                                  <p className="text-[10px] text-muted-foreground">left</p>
-                                </div>
-                              )}
-                            </div>
-                          </motion.div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </motion.div>
+        <Card className="rounded-lg border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-red-700 dark:text-red-300">Could not load dashboard data</p>
+              <p className="mt-1 text-sm text-red-600/80 dark:text-red-300/80">{(error as Error).message}</p>
+            </div>
+            <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
-          {/* Quick actions */}
-          <motion.div
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.35 }}
-          >
-            <Card className="h-full">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base">Quick Actions</CardTitle>
-                <CardDescription>Jump to common tasks</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-2.5">
-                {[
-                  { icon: '📋', label: 'Create New Event', href: '/events/create', color: 'hover:bg-indigo-50 dark:hover:bg-indigo-900/20' },
-                  { icon: '🏪', label: 'Browse Vendors', href: '/vendors', color: 'hover:bg-purple-50 dark:hover:bg-purple-900/20' },
-                  { icon: '📊', label: 'View All Events', href: '/events', color: 'hover:bg-green-50 dark:hover:bg-green-900/20' },
-                  { icon: '✨', label: 'AI Assistant', href: '#', color: 'hover:bg-amber-50 dark:hover:bg-amber-900/20' },
-                ].map((item) => (
-                  <Link key={item.href} href={item.href}>
-                    <motion.div
-                      whileHover={{ x: 3 }}
-                      className={`flex items-center gap-3 p-3 rounded-xl cursor-pointer transition-colors ${item.color}`}
-                    >
-                      <span className="text-xl" aria-hidden="true">{item.icon}</span>
-                      <span className="text-sm font-medium">{item.label}</span>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground ml-auto" />
-                    </motion.div>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {isLoading ? (
+          Array.from({ length: 4 }).map((_, index) => <Skeleton key={index} className="h-28 rounded-lg" />)
+        ) : (
+          <>
+            <Metric label="Total events" value={data?.total ?? 0} icon={Calendar} />
+            <Metric label="Active plans" value={activeEvents.length} icon={FolderKanban} />
+            <Metric label="Planned budget" value={formatCurrency(totalBudget, 'INR', 'en-IN')} icon={DollarSign} />
+            <Metric label="Expected guests" value={guestCount} icon={Users} />
+          </>
+        )}
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-[1fr_360px]">
+        <Card className="rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+          <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3">
+            <CardTitle className="text-base">Upcoming Events</CardTitle>
+            <Link href="/events">
+              <Button variant="ghost" size="sm" className="gap-1">
+                View all
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="space-y-3">
+                {Array.from({ length: 5 }).map((_, index) => <Skeleton key={index} className="h-16 rounded-md" />)}
+              </div>
+            ) : upcoming.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 p-8 text-center dark:border-neutral-800">
+                <p className="text-sm font-medium">No upcoming events</p>
+                <p className="mt-1 text-sm text-slate-500">Create an event or seed demo data to populate this view.</p>
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100 dark:divide-neutral-900">
+                {upcoming.map((event) => (
+                  <Link
+                    key={event.id}
+                    href={`/events/${event.id}`}
+                    className="flex items-center justify-between gap-4 py-3 transition-colors hover:bg-slate-50 dark:hover:bg-neutral-900/60"
+                  >
+                    <div className="min-w-0 px-1">
+                      <p className="truncate text-sm font-medium">{event.title}</p>
+                      <p className="mt-1 truncate text-xs text-slate-500">
+                        {new Date(event.start_date).toLocaleDateString()} {event.location ? `· ${event.location}` : ''}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 items-center gap-3">
+                      <Badge variant="outline" className={STATUS_STYLES[event.status]}>{event.status}</Badge>
+                      <span className="w-16 text-right text-sm font-semibold">{daysUntil(event.start_date)}d</span>
+                    </div>
                   </Link>
                 ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-                <div className="mt-4 pt-4 border-t border-border">
-                  <div className="flex items-center gap-2 p-3 rounded-xl bg-indigo-50 dark:bg-indigo-900/20">
-                    <div className="p-1.5 rounded-lg bg-indigo-600">
-                      <Sparkles className="h-3.5 w-3.5 text-white" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-300">AI-powered planning</p>
-                      <p className="text-[11px] text-indigo-600/70 dark:text-indigo-400/70">Open any event to use AI</p>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </div>
-      )}
+        <Card className="rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+          <CardHeader>
+            <CardTitle className="text-base">Operations</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Link href="/events/create">
+              <Button variant="outline" className="w-full justify-between">
+                Create event
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/events">
+              <Button variant="outline" className="w-full justify-between">
+                Manage events
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/vendors">
+              <Button variant="outline" className="w-full justify-between">
+                Browse vendors
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

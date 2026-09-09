@@ -2,144 +2,137 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
-import { Calendar, MapPin, Users, DollarSign, Search, Plus } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import { Calendar, ChevronRight, MapPin, Plus, Search, Users } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useEvents } from '@/hooks/use-events';
-import { formatCurrency, daysUntil } from '@/lib/utils';
+import { daysUntil, formatCurrency } from '@/lib/utils';
 import type { APIEvent } from '@/lib/api-types';
 
-const STATUS_COLORS: Record<string, string> = {
-  PLANNING: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300',
-  ACTIVE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300',
-  COMPLETED: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400',
-  CANCELLED: 'bg-red-100 text-red-600 dark:bg-red-900/40 dark:text-red-300',
+const STATUS_STYLES: Record<string, string> = {
+  PLANNING: 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-300',
+  ACTIVE: 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300',
+  COMPLETED: 'border-slate-200 bg-slate-50 text-slate-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-slate-300',
+  CANCELLED: 'border-red-200 bg-red-50 text-red-700 dark:border-red-900 dark:bg-red-950/40 dark:text-red-300',
 };
 
-const EVENT_ICONS: Record<string, string> = {
-  WEDDING: '💒', BIRTHDAY: '🎂', CORPORATE_EVENT: '💼', COLLEGE_FEST: '🎓',
-  CONFERENCE: '🎤', RECEPTION: '🥂', ENGAGEMENT: '💍', CONCERT: '🎵', OTHER: '🎉',
-};
-
-function EventCardSkeleton() {
-  return (
-    <Card className="p-6 space-y-4">
-      <Skeleton className="h-5 w-3/4" />
-      <Skeleton className="h-4 w-1/2" />
-      <div className="grid grid-cols-2 gap-3">
-        <Skeleton className="h-4 w-full" />
-        <Skeleton className="h-4 w-full" />
-      </div>
-    </Card>
-  );
-}
-
-function EventCard({ event }: { event: APIEvent }) {
+function EventRow({ event }: { event: APIEvent }) {
   const days = daysUntil(event.start_date);
+
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Link href={`/events/${event.id}`}>
-        <Card className="group cursor-pointer p-6 transition-all hover:shadow-lg hover:border-indigo-300 dark:hover:border-indigo-700">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xl">{EVENT_ICONS[event.event_type] ?? '🎉'}</span>
-                <h3 className="font-semibold text-lg truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
-                  {event.title}
-                </h3>
-              </div>
-              <Badge className={`text-xs ${STATUS_COLORS[event.status]}`}>
-                {event.status}
-              </Badge>
-            </div>
-            {days !== null && days >= 0 && (
-              <div className="text-right shrink-0">
-                <p className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{days}</p>
-                <p className="text-xs text-slate-500">days left</p>
-              </div>
-            )}
-          </div>
-          <div className="mt-4 grid grid-cols-2 gap-3 text-sm text-slate-600 dark:text-slate-400">
-            <div className="flex items-center gap-1.5">
-              <Calendar className="h-3.5 w-3.5 shrink-0" />
-              <span className="truncate">{new Date(event.start_date).toLocaleDateString()}</span>
-            </div>
-            {event.location && (
-              <div className="flex items-center gap-1.5">
-                <MapPin className="h-3.5 w-3.5 shrink-0" />
-                <span className="truncate">{event.location}</span>
-              </div>
-            )}
-            {event.estimated_guests && (
-              <div className="flex items-center gap-1.5">
-                <Users className="h-3.5 w-3.5 shrink-0" />
-                <span>{event.estimated_guests} guests</span>
-              </div>
-            )}
-            {event.budget && (
-              <div className="flex items-center gap-1.5">
-                <DollarSign className="h-3.5 w-3.5 shrink-0" />
-                <span>{formatCurrency(event.budget, event.currency)}</span>
-              </div>
-            )}
-          </div>
-        </Card>
-      </Link>
-    </motion.div>
+    <Link
+      href={`/events/${event.id}`}
+      className="grid gap-3 border-b border-slate-100 px-4 py-4 transition-colors last:border-0 hover:bg-slate-50 dark:border-neutral-900 dark:hover:bg-neutral-900/60 md:grid-cols-[1fr_150px_140px_120px_32px] md:items-center"
+    >
+      <div className="min-w-0">
+        <div className="flex items-center gap-2">
+          <p className="truncate text-sm font-medium">{event.title}</p>
+          <Badge variant="outline" className={STATUS_STYLES[event.status]}>{event.status}</Badge>
+        </div>
+        <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-500">
+          <span className="flex items-center gap-1">
+            <Calendar className="h-3.5 w-3.5" />
+            {new Date(event.start_date).toLocaleDateString()}
+          </span>
+          {event.location ? (
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5" />
+              {event.location}
+            </span>
+          ) : null}
+        </div>
+      </div>
+      <div className="text-sm text-slate-600 dark:text-slate-300">{event.event_type.replace(/_/g, ' ')}</div>
+      <div className="flex items-center gap-1 text-sm text-slate-600 dark:text-slate-300">
+        <Users className="h-3.5 w-3.5 text-slate-400" />
+        {event.estimated_guests ?? 0}
+      </div>
+      <div className="text-sm font-medium">
+        {event.budget ? formatCurrency(event.budget, event.currency, event.currency === 'INR' ? 'en-IN' : 'en-US') : '-'}
+        <p className="text-xs font-normal text-slate-500">{days >= 0 ? `${days} days left` : 'Past event'}</p>
+      </div>
+      <ChevronRight className="hidden h-4 w-4 text-slate-400 md:block" />
+    </Link>
   );
 }
 
 export default function EventsPage() {
   const [search, setSearch] = useState('');
-  const { data, isLoading, isError, error } = useEvents({ search: search || undefined });
+  const { data, isLoading, isError, error, refetch } = useEvents({ search: search || undefined, limit: 50 });
 
   return (
-    <div className="space-y-8">
-      <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between">
+    <div className="space-y-5">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold">Events</h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-400">
-            {data ? `${data.total} event${data.total !== 1 ? 's' : ''}` : 'Manage all your events'}
-          </p>
+          <h1 className="text-2xl font-semibold tracking-tight">Events</h1>
+          <p className="mt-1 text-sm text-slate-500">{data ? `${data.total} events in workspace` : 'Manage plans, budgets, tasks, and vendors.'}</p>
         </div>
         <Link href="/events/create">
-          <Button size="lg" className="gap-2"><Plus className="h-4 w-4" />Create Event</Button>
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create event
+          </Button>
         </Link>
-      </motion.div>
-
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
-        <Input placeholder="Search events…" className="pl-10" value={search}
-          onChange={(e) => setSearch(e.target.value)} />
       </div>
 
-      {isError && (
-        <Card className="p-8 text-center border-red-200 dark:border-red-800">
-          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load events</p>
-          <p className="text-sm text-slate-500 mt-1">{(error as Error).message}</p>
-        </Card>
-      )}
+      <Card className="rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+        <CardContent className="p-4">
+          <div className="relative max-w-lg">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <Input
+              placeholder="Search by title or description"
+              className="pl-9"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {isLoading
-          ? Array.from({ length: 6 }).map((_, i) => <EventCardSkeleton key={i} />)
-          : data?.items.length === 0
-          ? (
-            <div className="col-span-full py-20 text-center">
-              <p className="text-5xl mb-4">🎉</p>
-              <p className="text-xl font-semibold">No events yet</p>
-              <p className="text-slate-500 mt-2">Create your first event to get started</p>
-              <Link href="/events/create"><Button className="mt-6 gap-2"><Plus className="h-4 w-4" /> Create Event</Button></Link>
+      {isError ? (
+        <Card className="rounded-lg border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30">
+          <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-medium text-red-700 dark:text-red-300">Events could not be loaded</p>
+              <p className="mt-1 text-sm text-red-600/80 dark:text-red-300/80">{(error as Error).message}</p>
             </div>
-          )
-          : data?.items.map((event) => <EventCard key={event.id} event={event} />)
-        }
-      </div>
+            <Button variant="outline" onClick={() => refetch()}>Retry</Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
+      <Card className="overflow-hidden rounded-lg border-slate-200 bg-white shadow-sm dark:border-neutral-800 dark:bg-neutral-950">
+        {isLoading ? (
+          <div className="space-y-3 p-4">
+            {Array.from({ length: 6 }).map((_, index) => <Skeleton key={index} className="h-16 rounded-md" />)}
+          </div>
+        ) : data?.items.length === 0 ? (
+          <div className="p-10 text-center">
+            <p className="text-sm font-medium">No events found</p>
+            <p className="mt-1 text-sm text-slate-500">Create a new event to start planning.</p>
+            <Link href="/events/create">
+              <Button className="mt-4 gap-2">
+                <Plus className="h-4 w-4" />
+                Create event
+              </Button>
+            </Link>
+          </div>
+        ) : (
+          <div>
+            <div className="hidden grid-cols-[1fr_150px_140px_120px_32px] border-b border-slate-100 bg-slate-50 px-4 py-2 text-xs font-medium uppercase tracking-wide text-slate-500 dark:border-neutral-900 dark:bg-neutral-900/70 md:grid">
+              <span>Event</span>
+              <span>Type</span>
+              <span>Guests</span>
+              <span>Budget</span>
+              <span />
+            </div>
+            {data?.items.map((event) => <EventRow key={event.id} event={event} />)}
+          </div>
+        )}
+      </Card>
     </div>
   );
 }

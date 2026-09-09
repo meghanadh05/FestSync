@@ -364,9 +364,9 @@ export function CreateEventWizard({ onComplete }: CreateEventWizardProps) {
                     <motion.button
                       key={theme.id}
                       whileHover={{ scale: 1.02 }}
-                      onClick={() => updateWizardState({ title: theme.id })}
+                      onClick={() => updateWizardState({ theme: theme.id })}
                       className={`p-4 rounded-lg border-2 overflow-hidden transition-all ${
-                        wizardState.title === theme.id
+                        wizardState.theme === theme.id
                           ? 'border-indigo-600'
                           : 'border-slate-200 dark:border-slate-700'
                       }`}
