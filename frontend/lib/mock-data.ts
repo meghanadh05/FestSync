@@ -4,7 +4,6 @@ import type {
   Task,
   Vendor,
   VendorService,
-  VendorImage,
   BudgetItem,
   SavedVendor,
   Guest,

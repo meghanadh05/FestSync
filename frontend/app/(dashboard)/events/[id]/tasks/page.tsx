@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Badge } from '@/components/ui/badge';
-import { useKanbanTasks, useCreateTask, useUpdateTaskStatus, useDeleteTask } from '@/hooks/use-tasks';
+import { useKanbanTasks, useCreateTask, useUpdateTaskStatus } from '@/hooks/use-tasks';
 import { useGenerateTasks } from '@/hooks/use-ai';
 import type { APITask, TaskStatusAPI } from '@/lib/api-types';
 import { toast } from 'sonner';
@@ -34,10 +34,8 @@ const COLUMNS: { key: ColKey; label: string; color: string }[] = [
   { key: 'completed', label: 'Completed', color: 'border-green-400 dark:border-green-600' },
 ];
 
-function TaskCard({ task, onStatusChange, onDelete }: {
+function TaskCard({ task }: {
   task: APITask;
-  onStatusChange: (taskId: string, status: TaskStatusAPI) => void;
-  onDelete: (taskId: string) => void;
 }) {
   const [dragging, setDragging] = useState(false);
 
@@ -83,12 +81,10 @@ function TaskCard({ task, onStatusChange, onDelete }: {
   );
 }
 
-function KanbanColumn({ col, tasks, onDrop, onStatusChange, onDelete }: {
+function KanbanColumn({ col, tasks, onDrop }: {
   col: typeof COLUMNS[number];
   tasks: APITask[];
   onDrop: (colKey: string, taskId: string) => void;
-  onStatusChange: (taskId: string, status: TaskStatusAPI) => void;
-  onDelete: (taskId: string) => void;
 }) {
   const [over, setOver] = useState(false);
 
@@ -118,8 +114,7 @@ function KanbanColumn({ col, tasks, onDrop, onStatusChange, onDelete }: {
         <Badge variant="outline" className="text-xs">{tasks.length}</Badge>
       </div>
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task}
-          onStatusChange={onStatusChange} onDelete={onDelete} />
+        <TaskCard key={task.id} task={task} />
       ))}
       {tasks.length === 0 && (
         <div className="flex-1 flex items-center justify-center py-8">
@@ -135,7 +130,6 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
   const { data: kanban, isLoading } = useKanbanTasks(eventId);
   const createTask = useCreateTask(eventId);
   const updateStatus = useUpdateTaskStatus(eventId);
-  const deleteTask = useDeleteTask(eventId);
   const generateTasks = useGenerateTasks(eventId);
 
   const [showNewTask, setShowNewTask] = useState(false);
@@ -199,8 +193,6 @@ export default function TasksPage({ params }: { params: Promise<{ id: string }> 
               col={col}
               tasks={(kanban as unknown as Record<ColKey, APITask[]>)?.[col.key] ?? []}
               onDrop={handleDrop}
-              onStatusChange={(taskId, status) => updateStatus.mutate({ taskId, status })}
-              onDelete={(taskId) => deleteTask.mutate(taskId)}
             />
           ))}
         </div>

@@ -25,9 +25,8 @@ import { Calendar, Filter, Plus, MoreVertical, X } from 'lucide-react';
 import {
   getPriorityBgColor,
   formatDate,
-  getPriorityColor,
 } from '@/lib/utils';
-import type { Task } from '@/types/index';
+import type { Task, TaskPriority, TaskStatus } from '@/types/index';
 
 interface KanbanBoardProps {
   tasks: Task[];
@@ -85,7 +84,7 @@ export function KanbanBoard({
 
   const handleDrop = (status: string) => {
     if (draggedTask && draggedTask.status !== status) {
-      onTaskUpdate?.(draggedTask.id, { status: status as any });
+      onTaskUpdate?.(draggedTask.id, { status: status as TaskStatus });
       setDraggedTask(null);
     }
   };
@@ -95,8 +94,8 @@ export function KanbanBoard({
       onTaskCreate?.({
         title: newTask.title,
         description: newTask.description,
-        priority: newTask.priority as any,
-        status: selectedStatus as any,
+        priority: newTask.priority as TaskPriority,
+        status: selectedStatus as TaskStatus,
       });
       setNewTask({ title: '', description: '', priority: 'medium' });
       setShowNewTaskDialog(false);

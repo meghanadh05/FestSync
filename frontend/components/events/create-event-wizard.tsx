@@ -8,15 +8,7 @@ import { Card } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import {
   ArrowRight,
   ArrowLeft,
@@ -24,7 +16,6 @@ import {
   Calendar,
   MapPin,
   DollarSign,
-  Users,
   Palette,
   CheckCircle2,
 } from 'lucide-react';
@@ -139,7 +130,7 @@ export function CreateEventWizard({ onComplete }: CreateEventWizardProps) {
 
       {/* Step Indicators */}
       <div className="flex justify-between mb-8 overflow-x-auto pb-2">
-        {steps.map((step, idx) => {
+        {steps.map((step) => {
           const StepIcon = step.icon;
           const isActive = step.number === currentStep;
           const isCompleted = step.number < currentStep;
@@ -438,7 +429,7 @@ export function CreateEventWizard({ onComplete }: CreateEventWizardProps) {
 
                   <div className="p-4 rounded-lg bg-indigo-50 dark:bg-indigo-950 border border-indigo-200 dark:border-indigo-800">
                     <p className="text-sm text-indigo-900 dark:text-indigo-100">
-                      ✨ We'll generate a comprehensive event plan, create initial tasks, and recommend vendors once you create your event!
+                      ✨ We&apos;ll generate a comprehensive event plan, create initial tasks, and recommend vendors once you create your event!
                     </p>
                   </div>
                 </div>

@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import {
-  Calendar, DollarSign, CheckCircle2, Plus,
+  Calendar, DollarSign, Plus,
   ArrowRight, Sparkles, Users, TrendingUp,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';

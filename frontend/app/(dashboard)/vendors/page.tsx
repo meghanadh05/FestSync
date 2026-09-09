@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Star, MapPin, DollarSign, Search, Filter, BadgeCheck, Heart, Loader2 } from 'lucide-react';
+import { Star, MapPin, DollarSign, Search, BadgeCheck, Heart, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

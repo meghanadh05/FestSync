@@ -15,7 +15,6 @@ import { useBudgetItems, useBudgetSummary, useCreateBudgetItem, useUpdateBudgetI
 import { useBudgetAdvice } from '@/hooks/use-ai';
 import { formatCurrency } from '@/lib/utils';
 import type { APIBudgetItem } from '@/lib/api-types';
-import { toast } from 'sonner';
 
 const HEALTH_CONFIG = {
   GOOD: { color: 'text-green-600', bg: 'bg-green-50 dark:bg-green-900/20', icon: TrendingUp, label: 'On track' },
