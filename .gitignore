@@ -1,0 +1,32 @@
+# Claude Code local memory
+.claude/
+
+# OS files
+.DS_Store
+
+# Screenshot placeholders (add real screenshots manually)
+docs/screenshots/
+
+# TypeScript incremental build cache
+frontend/tsconfig.tsbuildinfo
+
+# Environment files (never commit real credentials)
+.env
+.env.local
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# Python
+**pycache**/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+test.db
+
+# Node
+node_modules/
+.next/
+frontend/node_modules/
+frontend/.next/
